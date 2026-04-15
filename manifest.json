@@ -1,0 +1,11 @@
+{
+    "name": "Kebon: Game Bertani dan Berkebun",
+    "short_name": "Kebon",
+    "description": "Mainkan game permainan bertani dan berkebun.",
+    "icons": "kebon-favicon.jpg",
+    "theme_color": "#2D2D2D",
+    "background_color": "#2D2D2D",
+    "display": "standalone",
+    "start_url": "./index.html",
+    "orientation": "portrait"
+}
