@@ -323,7 +323,7 @@
         const PET_DATA = [
             { id: 0, name: 'Kucing', emoji: '🐱', price: 2000 },
             { id: 1, name: 'Penguin', emoji: '🐧', price: 4000 }, // Kelipatan +2000
-            { id: 2, name: 'Panda', emoji: '🐼', price: 6000 }
+            { id: 2, name: 'Panda', emoji: '🐼', price: 8000 }
             ];
             
             let ownedPets = [false, false, false];
@@ -339,9 +339,12 @@
         ];
 
         const quotes = [
-            "Piuh, cuacanya menarik!", "Kebunku sangat indah hari ini.",
-            "Waktunya menyiram tanaman.", "Semoga panen kali ini melimpah.",
-            "Aku cinta pertanian!", "Ayo tumbuh besar, sayangku."
+            "Piuh, cuacanya menarik!",
+            "Kebunku sangat indah hari ini.",
+            "Waktunya menyiram tanaman.",
+            "Semoga panen kali ini melimpah.",
+            "Aku cinta pertanian!",
+            "Ayo tumbuh besar, sayangku."
         ];
 
         const plots = [];
@@ -560,6 +563,15 @@
             const cont = document.getElementById('pet-list-ui');
             cont.innerHTML = "";
             
+            const hasAnyPet = ownedPets.includes(true);
+    
+    if (hasAnyPet) {
+        // Tombol Non-Aktif (🚫)
+        const offStyle = activePetIdx === -1 ? 'border: 2px solid red; border-radius: 5px; opacity: 1;' : 'opacity: 0.5;';
+        cont.innerHTML += `<span onclick="deactivatePet()" style="cursor:pointer; font-size:18px; margin-right: 8px; ${offStyle}" title="Non-aktifkan Pet">🚫</span>`;
+        
+    }
+            
             PET_DATA.forEach((pet, idx) => {
                 if (ownedPets[idx]) {
                     const isActive = activePetIdx === idx ? 'border: 2px solid orange; border-radius: 5px;' : 'opacity: 0.5;';
@@ -569,6 +581,22 @@
                 }
             });
         }
+        
+        function deactivatePet() {
+    activePetIdx = -1;
+    const petEl = document.getElementById('pet-sprite');
+    petEl.style.display = 'none';
+    
+    // Hentikan interval pergerakan agar hemat memori
+    if (window.petInterval) {
+        clearInterval(window.petInterval);
+        window.petInterval = null;
+    }
+    
+    changeQuote("Pet sedang istirahat di 🏠");
+    updateAll();
+}
+
         
         function buyPet(idx) {
             const pet = PET_DATA[idx];
@@ -829,16 +857,20 @@
         function updateAppearance() {
             const outfitEl = document.getElementById('char-outfit');
             
-            if (level >= 10) {
+            if (level >= 14) {
                 outfitEl.innerText = "👑";
-            } else if (level >= 8) {
+            } else if (level >= 12) {
                 outfitEl.innerText = "🎓";
-            } else if (level >= 6) {
+            } else if (level >= 10) {
                 outfitEl.innerText = "🎩";
-            } else if (level >= 4) {
+            }else if (level >= 8) {
+                outfitEl.innerText = "👒";
+            } else if (level >= 6) {
                 outfitEl.innerText = "⛑️";
-            }else if (level >= 2) {
+            } else if (level >= 4) {
                 outfitEl.innerText = "🧢";
+            } else if (level >= 2) {
+                outfitEl.innerText = "🪖";
             } else {
                 outfitEl.innerText = "";
             }
