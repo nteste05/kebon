@@ -287,8 +287,8 @@
             <div id="seed-selector"></div>
             <div style="margin-top:10px; font-size:12px; color:#666; border-top:1px solid #eee; padding-top:8px;">
                 🧪 Pupuk: <b id="f-qty">0</b> | <button onclick="buyFert()" style="background:none; border:none; color:var(--primary); font-weight:bold; cursor:pointer;">Beli (Rp50)</button>
-                <span id="pet-shop-area">
-        | 🐶 Pet: <button id="btn-pet" onclick="buyPet()" style="background:none; border:none; color:#fb8c00; font-weight:bold; cursor:pointer;">Adopsi (Rp1.500)</button></span>
+                <span id="pet-shop-area">| 🐾 Pet: <span id="pet-list-ui"></span>
+                </span>
             </div>
         </div>
 
@@ -306,21 +306,29 @@
                 </div>
             </div>
             <!-- Elemen Visual Pet -->
-            <div id="pet-sprite" style="position: absolute; display: none; font-size: 30px; z-index: 5; transition: all 1.0s ease-in-out;">🐅</div>
+            <div id="pet-sprite" style="position: absolute; display: none; font-size: 30px; z-index: 5; transition: all 2.0s ease-in-out;">🐅</div>
             <div class="farm-grid" id="grid"></div>
         </div>
     </div>
     
     <script>
-        let money = 0;
+        let money = 100000;
         let inventory = { 'Tomat': 0, 'Wortel': 0, 'Jagung': 0, 'Apel': 0, 'Stroberi': 0, 'Anggur': 0 };
         let xp = 0;
         let level = 1;
         let fQty = 0;
         let selSeedIdx = 0;
         let pEmoji = "👨‍🌾";
-        let hasPet = false;
-
+        
+        const PET_DATA = [
+            { id: 0, name: 'Kucing', emoji: '🐱', price: 2000 },
+            { id: 1, name: 'Penguin', emoji: '🐧', price: 4000 }, // Kelipatan +2000
+            { id: 2, name: 'Panda', emoji: '🐼', price: 6000 }
+            ];
+            
+            let ownedPets = [false, false, false];
+            let activePetIdx = -1;
+            
         const crops = [
             { name: 'Tomat', emoji: '🍅', price: 100, min: 1, seeds: 2 },
             { name: 'Wortel', emoji: '🥕', price: 200, min: 3, seeds: 0 },
@@ -475,6 +483,7 @@
                     changeQuote("YAY! Aku naik level! 🌟");
                 }
                 p.state = 'empty';
+                p.fert = false;
                 if(p.timer) clearInterval(p.timer);
             }
             updateAll();
@@ -483,7 +492,7 @@
         function buyPlot(i) {
             const unlockedCount = plots.filter(p => !p.locked).length;
             const power = unlockedCount - 2;
-            const price = Math.floor(1000 * Math.pow(1.2, power));
+            const price = Math.floor(1000 * Math.pow(2, power));
             
             if (confirm(`Buka petak ini seharga Rp${price}?\n(Syarat: Uang cukup dan punya minimal 1 Benih atau lumbung tidak kosong)`)) {
                 if (money >= price && (totalSeeds >= 1 || inventory >= 1)) {
@@ -547,39 +556,60 @@
             updateAll();
         }
         
-        function buyPet() {
-            if (hasPet) return;
-            const petPrice = 1500;
-            if (money >= petPrice) {
-                money -= petPrice;
-                hasPet = true;
-                const petEl = document.getElementById('pet-sprite');
-                petEl.style.display = 'block';
-                document.getElementById('pet-shop-area').innerHTML = "| 🐶 Pet: <b>Dimiliki</b>";
-                changeQuote("Yeay! Sekarang aku punya teman baru! 🐶");
-                movePet();
-                setInterval(movePet, 3000);
+        function updatePetUI() {
+            const cont = document.getElementById('pet-list-ui');
+            cont.innerHTML = "";
+            
+            PET_DATA.forEach((pet, idx) => {
+                if (ownedPets[idx]) {
+                    const isActive = activePetIdx === idx ? 'border: 2px solid orange; border-radius: 5px;' : 'opacity: 0.5;';
+                    cont.innerHTML += `<span onclick="selectPet(${idx})" style="cursor:pointer; font-size:18px; margin:0 2px; ${isActive}">${pet.emoji}</span>`;
+                } else {
+            cont.innerHTML += `<button onclick="buyPet(${idx})" style="background:none; border:1px solid #ccc; border-radius:5px; font-size:10px; cursor:pointer;">Beli ${pet.emoji} (Rp${pet.price})</button> `;
+                }
+            });
+        }
+        
+        function buyPet(idx) {
+            const pet = PET_DATA[idx];
+            if (money >= pet.price) {
+                money -= pet.price;
+                ownedPets[idx] = true;
+                selectPet(idx);
                 updateAll();
             } else {
-                alert("Uang tidak cukup untuk mengadopsi pet! (Butuh Rp1.500)");
+                alert("Uang tidak cukup!");
             }
         }
         
+        function selectPet(idx) {
+            activePetIdx = idx;
+            const petEl = document.getElementById('pet-sprite');
+            petEl.innerText = PET_DATA[idx].emoji;
+            petEl.style.display = 'block';
+            
+            if (!window.petInterval) {
+                window.petInterval = setInterval(movePet, 8000);
+            }
+            changeQuote(`Halo ${PET_DATA[idx].name}! Temani aku ya. ✨`);
+            updateAll();
+        }
+        
         function movePet() {
-            if (!hasPet) return;
+            if (activePetIdx === -1) return;
             const petEl = document.getElementById('pet-sprite');
             
             petEl.classList.add('pet-walking');
             
-            const randomX = Math.random() * 200 - 100;
-            const randomY = Math.random() * 50 + 100;
+            const randomX = Math.random() * 250 - 100;
+            const randomY = Math.random() * 80 + 100;
             
-            petEl.style.left = `calc(50% + ${randomX}px)`;
+            petEl.style.left = `calc(40% + ${randomX}px)`;
             petEl.style.top = `${randomY}px`;
             
             setTimeout(() => {
                 petEl.classList.remove('pet-walking');
-            }, 1500);
+            }, 2000);
         }
         
         let currentRequest = null;
@@ -703,6 +733,7 @@
             document.getElementById('f-qty').innerText = fQty;
             updateAppearance();
             updateShop();
+            updatePetUI();
             plots.forEach((_, i) => renderPlot(i));
             checkGameOver();
         }
@@ -767,7 +798,7 @@
             el.innerHTML = "";
             
             const unlockedCount = plots.filter(plot => !plot.locked).length;
-            const currentPrice = Math.floor(1000 * Math.pow(1.2, Math.max(0, unlockedCount - 2)));
+            const currentPrice = Math.floor(1000 * Math.pow(2, Math.max(0, unlockedCount - 2)));
             
             if (p.locked) {
                 el.className = "plot";
@@ -822,17 +853,18 @@
                 fQty,
                 selSeedIdx,
                 pEmoji,
-                hasPet,
+                ownedPets,
+                activePetIdx,
                 pName: document.getElementById('disp-name').innerText,
                 cropsData: crops.map(c => c.seeds),
                 plotsLocked: plots.map(p => p.locked)
             };
-            localStorage.setItem('harvestSave', JSON.stringify(gameData));
+            localStorage.setItem('kebonSave', JSON.stringify(gameData));
             changeQuote("Permainan Berhasil Disimpan! 💾");
         }
         
         function loadGame() {
-            const saved = localStorage.getItem('harvestSave');
+            const saved = localStorage.getItem('kebonSave');
             if (!saved) {
                 changeQuote("Tidak ada data tersimpan! ❌");
                 return;
@@ -849,7 +881,9 @@
             fQty = data.fQty;
             selSeedIdx = data.selSeedIdx;
             pEmoji = data.pEmoji;
-            hasPet = data.hasPet;
+            
+            ownedPets = data.ownedPets || [false, false, false];
+            activePetIdx = data.activePetIdx !== undefined ? data.activePetIdx : -1;
             
             document.getElementById('disp-name').innerText = data.pName;
             data.cropsData.forEach((s, i) => { if(crops[i]) crops[i].seeds = s; });
@@ -857,31 +891,28 @@
                 if (plots[i]) plots[i].locked = isLocked;
             });
             
-            const petEl = document.getElementById('pet-sprite');
-            if(hasPet) {
+            if (window.petInterval) clearInterval(window.petInterval);
+            if (activePetIdx > -1) {
+                const petEl = document.getElementById('pet-sprite');
+                petEl.innerText = PET_DATA[activePetIdx].emoji;
                 petEl.style.display = 'block';
-                document.getElementById('pet-shop-area').innerHTML = "| 🐶 Pet: <b>Dimiliki</b>";
-                window.petInterval = setInterval(movePet, 3000);
-                
-                setTimeout(movePet, 500);
-            } else {
-                petEl.style.display = 'none';
+                window.petInterval = setInterval(movePet, 8000);
             }
-            
+                
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
             
             updateAll();
-            
+            startBGM();
             setTimeout(() => {
-                if(hasPet) movePet();
+                if(activePetIdx > -1) movePet();
             }, 100);
             changeQuote("Data Berhasil Dimuat! 📂");
         }
         
         function resetGame() {
             if (confirm("Hapus semua progress dan mulai dari nol?")) {
-                localStorage.removeItem('harvestSave');
+                localStorage.removeItem('kebonSave');
                 location.reload();
             }
         }
