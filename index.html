@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="canonical" href="https://nteste05.github.io/kebon/" />
+    <link rel="icon" type="image/jpg" href="kebon-favicon.jpg" sizes="32x32">
+    <link rel="apple-touch-icon" sizes="180x180" href="kebon-favicon.jpg">
+    <link rel="manifest" href="manifest.json">
+    
+    <title>Kebon: Game Permainan Bertani dan Berkebun Online</title>
+    <meta name="description" content="Mainkan Kebon, game bertani dan berkebun online gratis tanpa unduh! Bangun kebun impian, tanam sayur, dan panen hasil pertanianmu langsung di browser sekarang">
+    <meta name="keywords" content="game bertani online, permainan berkebun, game kebon, game simulasi pertanian, game tanpa unduh, game browser gratis, farming simulator indonesia">
+    <meta name="robots" content="index, follow">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://nteste05.github.io/kebon">
+    <meta property="og:title" content="Kebon: Game Permainan Bertani dan Berkebun Online">
+    <meta property="og:description" content="Mainkan Kebon, game bertani dan berkebun online gratis tanpa unduh! Bangun kebun impian, tanam sayur, dan panen hasil pertanianmu langsung di browser sekarang.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/nteste05/kebon/refs/heads/main/kebon-thumb.jpg">
+    
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://nteste05.github.io/kebon">
+    <meta property="twitter:title" content="Kebon: Game Permainan Bertani dan Berkebun Online">
+    <meta property="twitter:description" content="Mainkan Kebon, game bertani dan berkebun online gratis tanpa unduh! Bangun kebun impian, tanam sayur, dan panen hasil pertanianmu langsung di browser sekarang.">
+    <meta property="twitter:image" content="https://raw.githubusercontent.com/nteste05/kebon/refs/heads/main/kebon-thumb.jpg">
+    
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --secondary: #81c784;
+            --accent: #ffb300;
+            --dirt: #6d4c41;
+            --sky: #e3f2fd;
+        }
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; 
+            overflow-x: hidden; -webkit-user-select: none; 
+            animation: siklusWaktu 240s infinite ease-in-out;
+        }
+        
+        @keyframes siklusWaktu {
+            0%, 24% { background-color: #a1c4fd; }
+            25%, 49% { background-color: #4facfe; }
+            50%, 62% { background-color: #2a69b0; }
+            63%, 93% { background-color: #1d3866; }
+            94%, 99% { background-color: #033d9b; }
+            100% { background-color: #a1c4fd; }
+        }
+        
+        #setup-screen {
+            position: fixed; inset: 0; background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .setup-box { background: rgba(0,0,0,0.2); padding: 30px; border-radius: 20px; text-align: center; width: 85%; }
+        
+        #game-screen { display: none; }
+        .header-ui { 
+            background: var(--primary); color: white; padding: 15px; 
+            border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .dlevel {display: flex; justify-content: space-between; font-size: 14px;}
+        #xpEl {font-size: 10px}
+        .stats-grid { 
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-top: 10px;
+            background: white; padding: 10px; border-radius: 12px; color: #333; font-size: 14px;
+        }
+        .zoom-animation {
+            display: inline-block;
+            animation: popZoom 0.4s ease-out;
+        }
+        @keyframes popZoom {
+            0% { transform: scale(1); color: var(--primary);}
+            50% { transform: scale(1.2); color: #ff9800; }
+            100% { transform: scale(1);}
+        }
+        .sell-btn { 
+            padding: 8px; background: #fb8c00; margin-top: 10px;
+            color: white; border: none; font-size: 12px;
+        }
+        
+        .shop-panel { 
+            margin: 15px 15px 80px 15px; background: white; padding: 5px; border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+        }
+        #seed-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Membagi 2 kolom sama besar */
+            gap: 5px;                      /* Jarak antar kotak benih */
+            padding: 0;
+            margin: 0;
+        }
+        .seed-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 5px; border-radius: 10px; margin-bottom: 5px; border: 2px solid transparent;
+        }
+        .seed-item.selected { border-color: var(--accent); background: #fff8e1; }
+        .btn-buy { background: var(--accent); border: none; padding: 5px 0px; border-radius: 10px; cursor: pointer; }
+        
+        .world-container { position: relative; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .char-container { position: relative; margin-bottom: 10px; transition: 0.5s ease-in-out; }
+        #player-sprite {
+            font-size: 55px;
+            display: inline-block;
+        }
+        .player-moving {
+            animation: bounce 0.5s ease-in-out;
+        }
+        @keyframes bounce { 
+            0%, 100% { transform: translateY(0); } 
+            50% { transform: translateY(-15px); } 
+        }
+        .speech-bubble { 
+            position: absolute; top: -25px; left: 45px; 
+            background: white; padding: 5px 12px; border-radius: 15px; font-size: 11px;
+            white-space: nowrap; border: 1px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .farm-grid { display: grid; grid-template-columns: repeat(4, 80px); gap: 5px; }
+        .plot { 
+            width: 80px; height: 80px; background: var(--dirt); border: 3px solid #4e342e;
+            border-radius: 15px; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; position: relative; transition: 0.3s;
+        }
+        .is-fertilized { box-shadow: 0 0 15px #fdd835; border-color: #fdd835; }
+        .status-tag { 
+            position: absolute; top: 10px; font-size: 10px; font-weight: bold;
+            background: rgba(255,255,255,0.9); padding: 2px 6px; border-radius: 5px;
+        }
+        .need-water { color: #1e88e5; animation: blink 0.8s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        .ready-harvest { color: green; }
+        
+        .pet-walking, .tetangga-walking {
+            animation: bounce 0.5s infinite;
+        }
+        
+        .navbar {
+            
+            color: white;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin: 0 3px 0 0;
+        }
+
+        header h1 {
+            font-size: 12px;
+            margin:0;
+        }
+
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 2000;
+            top: 0;
+            left: 0;
+            background-color: #1a1a1a;
+            overflow-x: hidden;
+            transition: 0.3s;
+            padding-top: 10px;
+        }
+
+        .sidebar a {
+            padding: 15px 30px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            color: #ccc;
+            display: block;
+            transition: 0.2s;
+            border-bottom: 1px solid #333;
+        }
+
+        .sidebar a:hover {
+            color: #ffc107;
+            background-color: #222;
+        }
+
+        .sidebar .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 36px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .overlaynav {
+            display: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1500;
+        }
+        
+        .visually-hidden, header, header h1 {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Music (Loop) -->
+<audio id="bgm" loop>
+    <source src="kebon-bgm.webm" type="audio/webm">
+</audio>
+
+    <div id="setup-screen">
+        <div class="setup-box">
+            <h2 style="margin-top:0">🌿 Kebon: Game Bertani Online</h2>
+            <input type="text" id="p-name" maxlength="6" placeholder="Nama Petani [Maks 6]" style="width:100%; padding:12px; border-radius:10px; border:none; margin-bottom:15px;">
+            <div style="margin-bottom:20px;">
+                <span class="char-option" onclick="setChar(this, '👨‍🌾')" style="font-size:40px; cursor:pointer; padding:10px; border-radius:10px;">👨‍🌾</span>
+                <span class="char-option" onclick="setChar(this, '👩‍🌾')" style="font-size:40px; cursor:pointer; padding:10px; border-radius:10px;">👩‍🌾</span>
+                <span class="char-option" onclick="setChar(this, '🧑🏼‍🌾')" style="font-size:40px; cursor:pointer; padding:10px; border-radius:10px;">🧑🏼‍🌾</span>
+            </div>
+            <button onclick="initGame()" style="width:100%; padding:15px; background:var(--accent); border:none; border-radius:10px; font-weight:bold; color:#5d4037; font-size:18px;">MULAI BERTANI</button>
+        </div>
+    </div>
+
+    <div id="game-screen">
+        <div class="header-ui">
+            <div style="display:flex; align-items:center; justify-content: space-between;">
+                <div class="controls">
+                    <!-- Sidebar Menu -->
+                    <div id="mySidebar" class="sidebar">
+                        <span class="close-btn" onclick="closeNav()">&times;</span>
+                        <a href="https://nteste05.github.io/gemii/" onclick="closeNav()">👽 Lainnya</a>
+                    </div>
+                    <!-- Overlay Background -->
+                    <div id="overlaynav" class="overlaynav" onclick="closeNav()"></div>
+                    <nav class="navbar">
+                        <button class="menu-btn" onclick="openNav()">&#9776;</button>
+                        <header><h1>Kebon: Game Permainan Bertani dan Berkebun Online</h1></header>
+                    </nav>
+                </div>
+                <b id="disp-name" style="font-size:20px;">Petani</b>
+                <div class="save-controls" style="margin: 0px; padding: 0; display: flex; gap: 5px;">
+                    <button onclick="saveGame()" style="flex:1; padding: 5px; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer;">SIMPAN</button>
+                    <button onclick="loadGame()" style="flex:1; padding: 5px; background: #2196f3; color: white; border: none; border-radius: 5px; cursor: pointer;">MUAT</button>
+                    <button onclick="resetGame()" style="flex:1; padding: 5px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer;">RESET</button>
+                </div>
+                <div syle="display: flex; flex-direction: column;">
+                    <div class="dlevel">Level<span id="lvl">1</span></div>
+                    <small id="xpEl">xp</small>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div>💰 Rp<b id="money">0</b></div>
+                <div>🌱 Benih: <b id="totalSeeds">0</b>
+                </div>
+                <details id="lumbung-details">
+                    <summary style="cursor: pointer; padding: 0px;">📦 Lumbung: <b id="inv">0</b>
+                    </summary>
+                    <div style="position: absolute; display: flex; flex-direction: column; text-align: center; padding: 10px; background: white; z-index: 1;">
+                        <div id="detailLumbung">detailLumbung</div>
+                        <button class="sell-btn" onclick="sellAll()">JUAL</button>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <div class="shop-panel">
+            <div id="seed-selector"></div>
+            <div style="margin-top:10px; font-size:12px; color:#666; border-top:1px solid #eee; padding-top:8px;">
+                🧪 Pupuk: <b id="f-qty">0</b> | <button onclick="buyFert()" style="background:none; border:none; color:var(--primary); font-weight:bold; cursor:pointer;">Beli (Rp50)</button>
+                <span id="pet-shop-area">
+        | 🐶 Pet: <button id="btn-pet" onclick="buyPet()" style="background:none; border:none; color:#fb8c00; font-weight:bold; cursor:pointer;">Adopsi (Rp1.500)</button></span>
+            </div>
+        </div>
+
+        <div class="world-container">
+            <!-- Elemen Tetangga -->
+            <div id="neighbor-box" style="position: absolute; display: none; transition: all 1s ease-in-out; z-index: 4;">
+                <div class="speech-bubble" id="neighbor-bubble" style="top: -30px; left: 10px;"></div>
+                <div id="neighbor-sprite" style="font-size: 50px; cursor: pointer;" onclick="serveNeighbor()"></div>
+            </div>
+            <div class="char-container" id="char-box">
+                <div class="speech-bubble" id="bubble">Selamat datang!</div>
+                <div>
+                <div id="player-sprite">👨‍🌾</div>
+                <span id="char-outfit" style="position: absolute; left: 4px; bottom: 35px; font-size: 45px"></span>
+                </div>
+            </div>
+            <!-- Elemen Visual Pet -->
+            <div id="pet-sprite" style="position: absolute; display: none; font-size: 30px; z-index: 5; transition: all 1.0s ease-in-out;">🐅</div>
+            <div class="farm-grid" id="grid"></div>
+        </div>
+    </div>
+    
+    <script>
+        let money = 0;
+        let inventory = { 'Tomat': 0, 'Wortel': 0, 'Jagung': 0 };
+        let xp = 0;
+        let level = 1;
+        let fQty = 0;
+        let selSeedIdx = 0;
+        let pEmoji = "👨‍🌾";
+        let hasPet = false;
+
+        const crops = [
+            { name: 'Tomat', emoji: '🍅', price: 100, min: 1, seeds: 2 },
+            { name: 'Wortel', emoji: '🥕', price: 200, min: 3, seeds: 0 },
+            { name: 'Jagung', emoji: '🌽', price: 300, min: 5, seeds: 0 },
+            { name: 'Apel', emoji: '🍏', price: 400, min: 7, seeds: 0 },
+            { name: 'Stroberi', emoji: '🍓', price: 500, min: 9, seeds: 0 },
+            { name: 'Anggur', emoji: '🍇', price: 600, min: 11, seeds: 0 }
+        ];
+
+        const quotes = [
+            "Piuh, cuacanya menarik!", "Kebunku sangat indah hari ini.",
+            "Waktunya menyiram tanaman.", "Semoga panen kali ini melimpah.",
+            "Aku cinta pertanian!", "Ayo tumbuh besar, sayangku."
+        ];
+
+        const plots = [];
+        const totalSeeds = crops.reduce((total, item) => total + item.seeds, 0);
+
+        function setChar(el, e) {
+            document.querySelectorAll('.char-option').forEach(o => o.style.background = 'none');
+            el.style.background = 'white';
+            pEmoji = e;
+        }
+        
+        function startBGM() {
+            const bgm = document.getElementById('bgm');
+            bgm.volume = 0.2;
+            bgm.play();
+        }
+        
+        function initGame() {
+            startBGM();
+            
+            const name = document.getElementById('p-name').value || "Petani";
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            document.getElementById('disp-name').innerText = name;
+            document.getElementById('player-sprite').innerText = pEmoji;
+            
+            const container = document.getElementById('grid');
+            container.innerHTML = "";
+            for(let i=0; i<8; i++) {
+                const d = document.createElement('div');
+                d.className = 'plot';
+                d.onclick = () => tapPlot(i);
+                container.appendChild(d);
+                // 2 petak pertama terbuka (i < 2), sisanya terkunci
+                plots.push({ 
+                    state: 'empty', 
+                    stage: 1, 
+                    type: null, 
+                    watered: true, 
+                    fert: false, 
+                    timer: null, 
+                    el: d,
+                    locked: i >= 2 
+                });
+            }
+            
+            setInterval(() => {
+                money += 1;
+                updateAll();
+                
+                const bubble = document.getElementById('bubble');
+                bubble.innerText = "Yeay! Aku menemukan Rp1 di tanah! 💰";
+                setTimeout(changeQuote, 5000);
+            }, 60000);
+            
+            updateAll();
+            setInterval(moveChar, 4000);
+            setInterval(changeQuote, 8000);
+        }
+        
+        function playerAct() {
+            const player = document.getElementById('player-sprite');
+            const outfit = document.getElementById('char-outfit');
+            player.classList.remove('player-moving');
+            outfit.classList.remove('player-moving');
+            void player.offsetWidth;
+            player.classList.add('player-moving');
+            outfit.classList.add('player-moving');
+            
+            setTimeout(() => {
+                player.classList.remove('player-moving');
+                outfit.classList.remove('player-moving');
+            }, 500);
+        }
+
+        
+        function moveChar() {
+            const box = document.getElementById('char-box');
+            playerAct();
+            const x = Math.random() * 50 - 20;
+            box.style.transform = `translateX(${x}px)`;
+        }
+        
+        function changeQuote(customMsg = null) {
+            const bubble = document.getElementById('bubble');
+            if (customMsg) {
+                bubble.innerText = customMsg;
+            } else {
+                const q = quotes[Math.floor(Math.random() * quotes.length)];
+                bubble.innerText = q;
+            }
+        }
+        
+        function tapPlot(i) {
+            const p = plots[i];
+            
+            if(p.locked) {
+                buyPlot(i);
+                return;
+            }
+            
+            const s = crops[selSeedIdx];
+            if(p.state === 'empty' || p.state === 'dead') {
+                if(s.seeds > 0) {
+                    s.seeds--;
+                    p.state = 'growing';
+                    p.type = {...s};
+                    p.stage = 1;
+                    p.watered = true;
+                    p.fert = false;
+                    startGrowing(i);
+                }
+            } else if(p.state === 'growing') {
+                if(!p.watered) {
+                    if(p.timer) clearTimeout(p.timer);
+                    p.watered = true;
+                    p.stage++;
+                    if(p.stage >= 6) {
+                        p.timer = setTimeout(() => {
+                            p.state = 'harvest';
+                            updateAll();
+                        }, 10000);
+                    } else {
+                        startGrowing(i);
+                    }
+                } else if(!p.fert && fQty > 0) {
+                    p.fert = true; fQty--;
+                }
+            } else if(p.state === 'harvest') {
+                const cropName = p.type.name;
+                const hasil = p.fert ? 2 : 1;
+                inventory[cropName] += hasil;
+                
+                xp += 10;
+                let targetXP = 100 + ((level - 1) * 20);
+                if(xp >= targetXP) {
+                    level++;
+                    xp = 0;
+                    changeQuote("YAY! Aku naik level! 🌟");
+                }
+                p.state = 'empty';
+                if(p.timer) clearInterval(p.timer);
+            }
+            updateAll();
+        }
+        
+        function buyPlot(i) {
+            const unlockedCount = plots.filter(p => !p.locked).length;
+            const power = unlockedCount - 2;
+            const price = Math.floor(1000 * Math.pow(1.2, power));
+            
+            if (confirm(`Buka petak ini seharga Rp${price}?\n(Syarat: Uang cukup dan punya minimal 1 Benih atau lumbung tidak kosong)`)) {
+                if (money >= price && (totalSeeds >= 1 || inventory >= 1)) {
+                    money -= price;
+                    plots[i].locked = false;
+                    updateAll();
+                } else {
+                    alert(`Syarat tidak terpenuhi!`);
+                }
+            }
+        }
+        
+        function startGrowing(i) {
+            const p = plots[i];
+            if(p.timer) clearTimeout(p.timer);
+            
+            const cropIndex = crops.findIndex(c => c.name === p.type.name);
+            const growthDuration = 10000 + (cropIndex * 2000);
+            
+            p.timer = setTimeout(() => {
+                p.watered = false;
+                updateAll();
+                
+                p.timer = setTimeout(() => {
+                    if (!p.watered) {
+                        p.state = 'dead';
+                        updateAll();
+                    }
+                }, 30000);
+            }, growthDuration);
+        }
+        
+        function buySeed(idx) {
+            const cost = crops[idx].price * 0.5;
+            if(money >= cost) { money -= cost; crops[idx].seeds++; updateAll(); }
+        }
+        
+        function buyFert() {
+            if(money >= 50 && (totalSeeds >= 1 || inventory >= 1)) {
+                money -= 50; fQty++; updateAll();
+            } else {
+                if (money < 50) {
+                    alert(`Uang tidak cukup!`);
+                } else {
+                    alert("Kamu butuh minimal 1 benih atau gudang tidak kosong!");
+                }
+            }
+        }
+        
+        function sellAll() {
+            let totalCuan = 0;
+            for (let name in inventory) {
+                const cropData = crops.find(c => c.name === name);
+                if (cropData) {
+                    totalCuan += inventory[name] * cropData.price;
+                    inventory[name] = 0;
+                }
+            }
+            money += totalCuan;
+            document.getElementById('lumbung-details').removeAttribute('open');
+            updateAll();
+        }
+        
+        function buyPet() {
+            if (hasPet) return;
+            const petPrice = 1500;
+            if (money >= petPrice) {
+                money -= petPrice;
+                hasPet = true;
+                const petEl = document.getElementById('pet-sprite');
+                petEl.style.display = 'block';
+                document.getElementById('pet-shop-area').innerHTML = "| 🐶 Pet: <b>Dimiliki</b>";
+                changeQuote("Yeay! Sekarang aku punya teman baru! 🐶");
+                movePet();
+                setInterval(movePet, 3000);
+                updateAll();
+            } else {
+                alert("Uang tidak cukup untuk mengadopsi pet! (Butuh Rp1.500)");
+            }
+        }
+        
+        function movePet() {
+            if (!hasPet) return;
+            const petEl = document.getElementById('pet-sprite');
+            
+            petEl.classList.add('pet-walking');
+            
+            const randomX = Math.random() * 200 - 100;
+            const randomY = Math.random() * 50 + 100;
+            
+            petEl.style.left = `calc(50% + ${randomX}px)`;
+            petEl.style.top = `${randomY}px`;
+            
+            setTimeout(() => {
+                petEl.classList.remove('pet-walking');
+            }, 1500);
+        }
+        
+        let currentRequest = null;
+        let neighborTimer = null;
+        const neighborEmojis = ['👴🏻', '👵🏼', '🧔🏻'];
+        
+        setInterval(() => {
+            if (document.getElementById('neighbor-box').style.display === 'none') {
+                spawnNeighbor();
+            }
+        }, 30000); 
+        
+        function spawnNeighbor() {
+            const box = document.getElementById('neighbor-box');
+            const sprite = document.getElementById('neighbor-sprite');
+            const bubble = document.getElementById('neighbor-bubble');
+            
+            const unlockedCrops = crops.filter(c => level >= c.min);
+            
+            const randomCrop = unlockedCrops[Math.floor(Math.random() * unlockedCrops.length)];
+            const amount = Math.floor(Math.random() * 3) + 1;
+            currentRequest = { name: randomCrop.name, qty: amount, emoji: randomCrop.emoji, price: randomCrop.price };
+            
+            sprite.innerText = neighborEmojis[Math.floor(Math.random() * neighborEmojis.length)];
+            bubble.innerText = `Boleh beli ${amount} ${randomCrop.emoji}?`;
+            
+            box.style.display = 'block';
+            box.style.left = '-120px';
+            box.style.top = '-30px';
+            box.classList.add('tetangga-walking');
+            
+            setTimeout(() => {
+                box.style.left = '40px';
+            }, 1000);
+            
+            setTimeout(() => {
+                box.classList.remove('tetangga-walking');
+            }, 2000);
+            
+            neighborTimer = setTimeout(() => {
+                neighborLeave("Maaf, aku harus pergi...");
+            }, 30000);
+        }
+        
+        function neighborLeave(msg) {
+            const box = document.getElementById('neighbor-box');
+            const bubble = document.getElementById('neighbor-bubble');
+            
+            bubble.innerText = msg;
+            currentRequest = null;
+            
+            setTimeout(() => {
+                box.classList.add('tetangga-walking');
+                box.style.left = '-120px';
+                
+                setTimeout(() => {
+                    box.style.display = 'none';
+                    box.classList.remove('tetangga-walking');
+                }, 1000);
+            }, 1500);
+        }
+        
+        function serveNeighbor() {
+            if (!currentRequest) return;
+            
+            if (inventory[currentRequest.name] >= currentRequest.qty) {
+                inventory[currentRequest.name] -= currentRequest.qty;
+                const bonusPrice = Math.floor((currentRequest.price * currentRequest.qty) * 1.2);
+                money += bonusPrice;
+                clearTimeout(neighborTimer);
+                neighborLeave(`Terima kasih! Ini Rp${bonusPrice} ✨`);
+                updateAll();
+            } else {
+                const bubble = document.getElementById('neighbor-bubble');
+                bubble.innerText = `Yah, stok ${currentRequest.emoji} kamu kurang...`;
+            }
+        }
+        
+        function updateAll() {
+            const totalSeeds = crops.reduce((total, item) => total + item.seeds, 0);
+            const moneyEl = document.getElementById('money');
+            const lvlEl = document.getElementById('lvl');
+            const xpEl = document.getElementById('xpEl');
+            
+            const currentMoneyInUI = parseInt(moneyEl.innerText.replace(/\./g, '')) || 0;
+            if (currentMoneyInUI !== money) {
+                moneyEl.classList.remove("zoom-animation");
+                void moneyEl.offsetWidth; 
+                moneyEl.classList.add("zoom-animation");
+                moneyEl.innerText = money.toLocaleString();
+            }
+            
+            const currentLvlInUI = parseInt(lvlEl.innerText) || 0;
+            if (currentLvlInUI !== level) {
+                lvlEl.classList.remove("zoom-animation");
+                void lvlEl.offsetWidth;
+                lvlEl.classList.add("zoom-animation");
+                
+                let targetXP = 100 + ((level - 1) * 20);
+                lvlEl.innerHTML = `${level}`;
+                xpEl.innerHTML = `(${xp}/${targetXP} XP)`;
+            } else {
+                let targetXP = 100 + ((level - 1) * 20);
+                lvlEl.innerHTML = `${level}`;
+                xpEl.innerHTML = `(${xp}/${targetXP} XP)`;
+            }
+            
+            const totalBarang = Object.values(inventory).reduce((a, b) => a + b, 0);
+            
+            let detailLumbung = "";
+            crops.forEach(c => {
+                detailLumbung += `${c.emoji}${inventory[c.name] || 0} `;
+            });
+            document.getElementById('inv').innerHTML = totalBarang;
+            document.getElementById('detailLumbung').innerHTML = `<span style="font-size:12px; font-weight:normal; opacity:0.7;">(${detailLumbung.trim()})</span>`;
+            document.getElementById('money').innerText = money;
+            if (document.getElementById('totalSeeds')) {
+                document.getElementById('totalSeeds').innerText = totalSeeds;
+            }
+            
+            document.getElementById('f-qty').innerText = fQty;
+            updateAppearance();
+            updateShop();
+            plots.forEach((_, i) => renderPlot(i));
+            checkGameOver();
+        }
+        
+        function checkGameOver() {
+            const totalSeeds = crops.reduce((total, item) => total + item.seeds, 0);
+            const totalBarang = Object.values(inventory).reduce((a, b) => a + b, 0);
+            const anyPlantAlive = plots.some(p => p.state === 'growing' || p.state === 'harvest');
+            
+            if (money < 50 && totalSeeds <= 0 && totalBarang <= 0 && !anyPlantAlive) {
+                if (confirm("SEMUA HABIS! Ingin menerima bantuan untuk lanjut bermain?")) {
+                    getAid();
+                } else {
+                    alert("Memulai ulang game...");
+                    location.reload();
+                }
+            }
+        }
+
+        function getAid() {
+            const links = [
+                'https://google.com/search?q=gemii+portal+game+nteste05.github.io',
+                'https://google.com/search?q=game+monopoli+rungkad',
+                'https://google.com/search?q=Dreum+aplikasi+drum',
+                'https://google.com/search?q=gimel+gitar+melodi+nteste05.github.io'
+            ];
+            
+            const randomLink = links[Math.floor(Math.random() * links.length)];
+            window.open(randomLink, '_blank');
+            money += 50;
+            alert("Bantuan datang! Kamu menerima Rp50.");
+            updateAll();
+        }
+        
+        function updateShop() {
+            const cont = document.getElementById('seed-selector');
+            cont.innerHTML = "";
+            
+            crops.forEach((c, idx) => {
+                const isLocked = level < c.min;
+                const active = (selSeedIdx === idx && !isLocked) ? 'selected' : '';
+                const lockStyle = isLocked ? 'filter: grayscale(1); opacity: 0.7; cursor: not-allowed;' : 'cursor: pointer;';
+                cont.innerHTML += `
+                <div class="seed-item ${active}" style="${lockStyle}" onclick="${isLocked ? `alert('🔒 Fitur Terkunci! Capai Level ${c.min} untuk membuka ${c.name}.')` : `selSeedIdx=${idx}; updateAll()`}">
+                <div style="display:flex; align-items:center;">
+                    <span style="font-size: 14px;">${c.emoji} </span>
+                    <b style="font-size: 12px;margin-left: 5px">x${c.seeds} |</b>
+                </div>
+                <button class="btn-buy" 
+                    ${isLocked ? 'disabled' : ''} 
+                    onclick="event.stopPropagation(); ${isLocked ? '' : `buySeed(${idx})`}"
+                    style="width: 80px; ${isLocked ? 'background: #999; color: #eee;' : ''}">
+                    ${isLocked ? `🔒 Lvl ${c.min}` : `Rp${c.price * 0.5}`}
+                </button>
+                </div>`;
+            });
+        }
+        
+        function renderPlot(i) {
+            const p = plots[i];
+            const el = p.el;
+            el.innerHTML = "";
+            
+            const unlockedCount = plots.filter(plot => !plot.locked).length;
+            const currentPrice = Math.floor(1000 * Math.pow(1.2, Math.max(0, unlockedCount - 2)));
+            
+            if (p.locked) {
+                el.className = "plot";
+                el.style.background = "#bdc3c7"; // Warna abu-abu petak terkunci
+                el.innerHTML = `
+                    <div style="font-size:24px; filter:grayscale(1)">🔒</div>
+                    <div style="font-size:10px; font-weight:bold; color:#7f8c8d; margin-top:5px;">
+                        BELI<br>Rp${currentPrice.toLocaleString()}
+                    </div>
+                `;
+                return;
+            }
+            
+            el.style.background = "";
+            el.className = `plot ${p.fert ? 'is-fertilized' : ''}`;
+            
+            if(p.state === 'empty') {
+                el.innerHTML = "🕳️"; el.style.fontSize = "12px";}
+            else if(p.state === 'dead') el.innerHTML = "💀<br><small>Layu</small>";
+            else if(p.state === 'harvest') {
+                el.innerHTML = `<span style="font-size:60px">${p.type.emoji}</span><div class="status-tag ready-harvest">aku siap</div>`;
+            } else {
+                el.innerHTML = `<span style="font-size:${p.stage * 10}px">${p.type.emoji}</span>`;
+                if(!p.watered) el.innerHTML += `<div class="status-tag need-water">aku butuh air</div>`;
+            }
+        }
+        
+        function updateAppearance() {
+            const outfitEl = document.getElementById('char-outfit');
+            
+            if (level >= 10) {
+                outfitEl.innerText = "👑";
+            } else if (level >= 8) {
+                outfitEl.innerText = "🎓";
+            } else if (level >= 6) {
+                outfitEl.innerText = "🎩";
+            } else if (level >= 4) {
+                outfitEl.innerText = "⛑️";
+            }else if (level >= 2) {
+                outfitEl.innerText = "🧢";
+            } else {
+                outfitEl.innerText = "";
+            }
+        }
+        
+        function saveGame() {
+            const gameData = {
+                money,
+                inventory,
+                xp,
+                level,
+                fQty,
+                selSeedIdx,
+                pEmoji,
+                hasPet,
+                pName: document.getElementById('disp-name').innerText,
+                cropsData: crops.map(c => c.seeds),
+                plotsLocked: plots.map(p => p.locked)
+            };
+            localStorage.setItem('harvestSave', JSON.stringify(gameData));
+            changeQuote("Permainan Berhasil Disimpan! 💾");
+        }
+        
+        function loadGame() {
+            const saved = localStorage.getItem('harvestSave');
+            if (!saved) {
+                changeQuote("Tidak ada data tersimpan! ❌");
+                return;
+            }
+            
+            const data = JSON.parse(saved);
+            
+            if (window.petInterval) clearInterval(window.petInterval);
+            
+            money = data.money;
+            inventory = data.inventory;
+            xp = data.xp;
+            level = data.level;
+            fQty = data.fQty;
+            selSeedIdx = data.selSeedIdx;
+            pEmoji = data.pEmoji;
+            hasPet = data.hasPet;
+            
+            document.getElementById('disp-name').innerText = data.pName;
+            data.cropsData.forEach((s, i) => { if(crops[i]) crops[i].seeds = s; });
+            data.plotsLocked.forEach((isLocked, i) => {
+                if (plots[i]) plots[i].locked = isLocked;
+            });
+            
+            const petEl = document.getElementById('pet-sprite');
+            if(hasPet) {
+                petEl.style.display = 'block';
+                document.getElementById('pet-shop-area').innerHTML = "| 🐶 Pet: <b>Dimiliki</b>";
+                window.petInterval = setInterval(movePet, 3000);
+                
+                setTimeout(movePet, 500);
+            } else {
+                petEl.style.display = 'none';
+            }
+            
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            
+            updateAll();
+            
+            setTimeout(() => {
+                if(hasPet) movePet();
+            }, 100);
+            changeQuote("Data Berhasil Dimuat! 📂");
+        }
+        
+        function resetGame() {
+            if (confirm("Hapus semua progress dan mulai dari nol?")) {
+                localStorage.removeItem('harvestSave');
+                location.reload();
+            }
+        }
+        
+        const sidebar = document.getElementById("mySidebar");
+        const overlaynav = document.getElementById("overlaynav");
+        
+        function openNav() {
+            sidebar.style.width = "280px";
+            overlaynav.style.display = "block";
+            document.body.style.overflow = "hidden";
+        }
+        
+        function closeNav() {
+            sidebar.style.width = "0";
+            overlaynav.style.display = "none";
+            // Mengembalikan scroll body
+            document.body.style.overflow = "auto";
+        }
+    </script>
+    <p class="visually-hidden">Kebon: Rasakan Serunya Permainan Bertani dan Berkebun Online Tanpa Unduh!<br><br>Apakah Anda sedang mencari cara untuk melepas penat setelah seharian bekerja? Atau mungkin Anda merindukan suasana pedesaan yang asri namun terjebak di hiruk pikuk perkotaan? Selamat datang di Kebon, sebuah <strong>game bertani dan berkebun</strong> singleplayer revoluzioner yang bisa Anda mainkan langsung melalui browser tanpa perlu mengunduh aplikasi apa pun!</p>
+    <p class="visually-hidden">Kebon adalah platform <strong>permainan simulasi pertanian</strong> modern yang dirancang untuk memberikan pengalaman bermain yang santai namun tetap menantang. Sebagai pemain, Anda akan berperan sebagai pemilik lahan kosong yang memiliki impian besar untuk membangun ekosistem pertanian tersukses. </p>
+    <p class="visually-hidden">Mengapa Memilih Kebon?<br><br>Tanpa Unduh (Instant Play): Tidak perlu khawatir dengan memori HP yang penuh atau proses instalasi yang lama. Cukup buka browser Anda, ketik alamatnya, dan Anda bisa langsung berkebun.<br>Aksesibilitas Tinggi: Dapat dimainkan di perangkat apa pun, mulai dari smartphone, tablet, hingga PC. Progress permainan Anda tersimpan secara online sehingga Anda bisa melanjutkan petualangan berkebun kapan saja dan di mana saja.<br>Pengalaman Singleplayer yang Fokus: Nikmati ketenangan bermain sendirian tanpa gangguan kompetisi yang toksik. Fokuslah pada pertumbuhan tanaman Anda dan keindahan kebun yang Anda bangun.</p>
+    <p class="visually-hidden">Cara Bermain Kebon untuk Pemula<br>Memulai petualangan di Kebon sangatlah mudah. Pertama, siapkan lahan Anda dengan mencangkul tanah yang tersedia. Pilih bibit pertama Anda di toko dan mulailah menanam. Jangan lupa untuk menyiramnya secara rutin agar tanaman tidak layu. Seiring berjalannya waktu, Anda akan mendapatkan poin pengalaman (XP) yang akan membuka berbagai fitur baru yang lebih seru.</p>
+    <p class="visually-hidden">Kebon bukan sekadar permainan bertani biasa; ini adalah ruang pelarian digital bagi siapa saja yang mencintai ketenangan dan kepuasan melihat sesuatu tumbuh dari hasil jerih payah sendiri. Dengan grafis yang memanjakan mata dan mekanisme gameplay yang intuitif, Kebon siap menjadi teman setia di waktu luang Anda.<br><br>Siapkan cangkul virtual Anda dan mulai bangun kerajaan hijau Anda hari ini. <strong>Mainkan Kebon</strong> sekarang juga secara gratis, tanpa unduh, dan rasakan sensasi menjadi petani modern yang sukses!</p>
+</body>
+</html>
